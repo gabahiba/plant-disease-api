@@ -5,6 +5,8 @@ import numpy as np
 from flask_cors import CORS
 import os
 import json
+import tensorflow as tf
+tf.config.run_functions_eagerly(True)
 
 app = Flask(__name__)
 CORS(app)
