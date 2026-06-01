@@ -15,7 +15,7 @@ CORS(app)
 print("جاري تحميل النموذج من مجلد SavedModel...")
 try:
     # تأكدي من اسم المجلد هو 'saved_model'
-    model = tf.keras.models.load_model('plant_disease_model_fast.keras')
+    model = tf.keras.models.load_model('plant_disease_model_fixed.keras')
     print("تم تحميل النموذج بنجاح!")
 except Exception as e:
     print(f"خطأ فادح: لم يتم تحميل النموذج. تأكد من وجود مجلد 'saved_model'. الخطأ: {e}")
