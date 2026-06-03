@@ -14,13 +14,11 @@ CORS(app)
 # 1. تحميل الموديل بصيغة SavedModel
 print("جاري تحميل النموذج من مجلد SavedModel...")
 try:
-    # تأكدي من اسم المجلد هو 'saved_model'
-    model = tf.keras.models.load_model('plant_disease_model_fixed.keras')
-    print("تم تحميل النموذج بنجاح!")
+    model = tf.keras.models.load_model('plant_disease_model_fixed.keras', custom_objects={'InputLayer': InputLayer})
+    print("✅ تم تحميل النموذج بنجاح باستخدام custom_objects.")
 except Exception as e:
-    print(f"خطأ فادح: لم يتم تحميل النموذج. تأكد من وجود مجلد 'saved_model'. الخطأ: {e}")
-    # من الأفضل إيقاف التطبيق إذا لم يتم تحميل النموذج
-    raise e
+    print(f"❌ فشل تحميل النموذج: {e}")
+    model = None
 
 # قائمة الفئات الثابتة (يجب أن تكون بنفس الترتيب الذي تم التدريب عليه)
 classes = [
