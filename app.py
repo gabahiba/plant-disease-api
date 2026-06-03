@@ -23,19 +23,11 @@ except Exception as e:
     model = None
 
 # قائمة الفئات الثابتة (يجب أن تكون بنفس الترتيب الذي تم التدريب عليه)
-classes = [
-    'Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
-    'Blueberry___healthy', 'Cherry___Powdery_mildew', 'Cherry___healthy', 'Corn___Cercospora_leaf_spot',
-    'Corn___Common_rust', 'Corn___Northern_Leaf_Blight', 'Corn___healthy', 'Grape___Black_rot',
-    'Grape___Esca_(Black_Measles)', 'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)', 'Grape___healthy',
-    'Orange___Haunglongbing_(Citrus_greening)', 'Peach___Bacterial_spot', 'Peach___healthy',
-    'Pepper__bell___Bacterial_spot', 'Pepper__bell___healthy', 'Potato___Early_blight', 'Potato___healthy',
-    'Potato___Late_blight', 'Raspberry___healthy', 'Soybean___healthy', 'Squash___Powdery_mildew',
-    'Strawberry___healthy', 'Strawberry___Leaf_scorch', 'Tomato_Bacterial_spot', 'Tomato_Early_blight',
-    'Tomato_healthy', 'Tomato_Late_blight', 'Tomato_Leaf_Mold', 'Tomato_Septoria_leaf_spot',
-    'Tomato_Spider_mites_Two_spotted_spider_mite', 'Tomato__Target_Spot', 'Tomato__Tomato_mosaic_virus',
-    'Tomato__Tomato_YellowLeaf__Curl_Virus', 'non_plant'
-]
+# استبدال القائمة اليدوية بقراءة الترتيب من ملف JSON
+import json
+with open('class_order.json', 'r', encoding='utf-8') as f:
+    classes = json.load(f)
+print(f"✅ تم تحميل {len(classes)} فئة بالترتيب الصحيح.")
 print("تم تحميل قائمة الفئات.")
 
 with open('disease_treatment.json', 'r', encoding='utf-8') as f:

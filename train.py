@@ -6,6 +6,8 @@ import numpy as np
 import json
 import os
 from flask_cors import CORS
+from tensorflow.keras.models import save_model
+save_model(model, 'plant_disease_model_fixed.keras', save_format='keras')
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
