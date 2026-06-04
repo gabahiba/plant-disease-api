@@ -78,6 +78,20 @@ def test_page():
 
 @app.route("/predict", methods=["POST"])
 def predict():
+    import time
+    start_time = time.time()
+    try:
+        # ... الكود الموجود داخل الدالة ...
+        pass  # استبدلي هذا بالكود الأصلي للدالة
+    except Exception as e:
+        import traceback
+        print(f"❌ خطأ في التنبؤ: {e}")
+        print(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
+    finally:
+        end_time = time.time()
+        print(f"✅ وقت معالجة الطلب: {end_time - start_time:.2f} ثانية")
+        
     if "file" not in request.files:
         return jsonify({"error": "No image uploaded"}), 400
 
