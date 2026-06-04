@@ -5,45 +5,54 @@ import numpy as np
 from flask_cors import CORS
 import os
 import json
-import tensorflow as tf
-from tensorflow.keras.layers import InputLayer
 
+# تفعيل التنفيذ المتعجل (قد يساعد في الأداء لكن ليس ضرورياً)
 tf.config.run_functions_eagerly(True)
 
 app = Flask(__name__)
 CORS(app)
 
-# 1. تحميل الموديل بصيغة SavedModel
-print("جاري تحميل النموذج من مجلد SavedModel...")
-try:
-    model = tf.keras.models.load_model('plant_disease_model_fixed.keras', custom_objects={'InputLayer': InputLayer})
-    print("✅ تم تحميل النموذج بنجاح باستخدام custom_objects.")
-except Exception as e:
-    print(f"❌ فشل تحميل النموذج: {e}")
-    model = None
+# ===========================
+# 1. تحميل نموذج TFLite
+# ===========================
+print("جاري تحميل نموذج TFLite...")
+interpreter = tf.lite.Interpreter(model_path="model.tflite")
+interpreter.allocate_tensors()
 
-# قائمة الفئات الثابتة (يجب أن تكون بنفس الترتيب الذي تم التدريب عليه)
-# استبدال القائمة اليدوية بقراءة الترتيب من ملف JSON
-import json
+# الحصول على تفاصيل الإدخال والإخراج
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+print("✅ تم تحميل نموذج TFLite بنجاح.")
+
+# ===========================
+# 2. تحميل قائمة الفئات (من class_order.json)
+# ===========================
 with open('class_order.json', 'r', encoding='utf-8') as f:
     classes = json.load(f)
 print(f"✅ تم تحميل {len(classes)} فئة بالترتيب الصحيح.")
-print("تم تحميل قائمة الفئات.")
 
+# ===========================
+# 3. تحميل قاعدة بيانات العلاج
+# ===========================
 with open('disease_treatment.json', 'r', encoding='utf-8') as f:
     treatment_db = json.load(f)
 print("تم تحميل قاعدة بيانات العلاج.")
 
+# ===========================
+# 4. دالة تجهيز الصورة
+# ===========================
 def preprocess_image(img):
-    # نفس حجم التدريب
+    # تغيير الحجم كما في التدريب (128×128)
     img = img.resize((128, 128))
-    img = np.array(img)
-    img = img / 255.0
-    img = np.expand_dims(img, axis=0)
-    return img
+    img_array = np.array(img, dtype=np.float32)
+    img_array = img_array / 255.0
+    # إضافة بُعد الدفعة (batch dimension)
+    img_array = np.expand_dims(img_array, axis=0)
+    return img_array
 
-# دوال الـ endpoints ('/', '/test', '/predict') بنفس الشكل الذي كانت عليه...
-# ... (لنطبق عليهم نفس الكود القديم ولكن مع المتغيرات الجديدة)
+# ===========================
+# 5. دوال المسارات (Endpoints)
+# ===========================
 @app.route("/")
 def home():
     return "Plant Disease API Running"
@@ -78,20 +87,6 @@ def test_page():
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    import time
-    start_time = time.time()
-    try:
-        # ... الكود الموجود داخل الدالة ...
-        pass  # استبدلي هذا بالكود الأصلي للدالة
-    except Exception as e:
-        import traceback
-        print(f"❌ خطأ في التنبؤ: {e}")
-        print(traceback.format_exc())
-        return jsonify({"error": str(e)}), 500
-    finally:
-        end_time = time.time()
-        print(f"✅ وقت معالجة الطلب: {end_time - start_time:.2f} ثانية")
-        
     if "file" not in request.files:
         return jsonify({"error": "No image uploaded"}), 400
 
@@ -99,22 +94,28 @@ def predict():
     if file.filename == "":
         return jsonify({"error": "No image selected"}), 400
 
-    # التأكد من أن قائمة الفئات ليست فارغة
     if not classes:
         return jsonify({"error": "Model not configured properly (no classes loaded)"}), 500
 
     try:
+        # قراءة الصورة ومعالجتها
         img = Image.open(file).convert("RGB")
-        processed_image = preprocess_image(img)
-        prediction = model.predict(processed_image, verbose=0)
-        predicted_index = int(np.argmax(prediction))
-        confidence = float(np.max(prediction))
+        processed_img = preprocess_image(img)
+
+        # التنبؤ باستخدام TFLite
+        interpreter.set_tensor(input_details[0]['index'], processed_img)
+        interpreter.invoke()
+        predictions = interpreter.get_tensor(output_details[0]['index'])[0]
+
+        predicted_index = int(np.argmax(predictions))
+        confidence = float(np.max(predictions))
 
         if predicted_index >= len(classes):
             return jsonify({"error": f"Prediction index {predicted_index} out of range"}), 500
 
         predicted_class = classes[predicted_index]
 
+        # رفض الصور غير النباتية إذا كانت الفئة موجودة
         if predicted_class == "non_plant":
             return jsonify({
                 "status": "rejected",
