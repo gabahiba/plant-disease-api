@@ -119,8 +119,7 @@ def predict():
         if predicted_class == "non_plant":
             return jsonify({
                 "status": "rejected",
-                "message": "This image is not a plant leaf.",
-                "confidence": confidence
+                "message": "This image is not a plant leaf."
             })
 
         is_healthy = "healthy" in predicted_class.lower()
@@ -137,8 +136,7 @@ def predict():
             "status": "success",
             "healthy": is_healthy,
             "disease": disease_name,
-            "treatment": treatment,
-            "confidence": confidence
+            "treatment": treatment
         })
 
     except Exception as e:
